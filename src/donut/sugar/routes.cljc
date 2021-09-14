@@ -281,14 +281,16 @@
            expanders (::expand-with opts [:collection :member])
            opts      (assoc opts ::base-name base-name)]
        (when-let [explanation (m/explain ExpandWith expanders)]
-         (throw (ex-info "Invalid route expanders"
-                         {:spec-explain-human (me/humanize explanation)})))
+         (throw (ex-info (str "Invalid route expanders for " ns)
+                         {:explain       explanation
+                          :explain-human (me/humanize explanation)})))
        (reduce (fn [routes expander]
                  (let [expander-opts (if (sequential? expander) (second expander) {})
                        expander      (if (sequential? expander) (first expander) expander)]
                    (when-let [explanation (m/explain ExpanderOpts expander-opts)]
-                     (throw (ex-info "Invalid expander opts"
-                                     {:spec-explain-human (me/humanize explanation)})))
+                     (throw (ex-info (str "Invalid expander opts for " ns)
+                                     {:explain       explanation
+                                      :explain-human (me/humanize explanation)})))
                    (conj routes (expand-with ns expander (assoc opts ::expander-opts expander-opts)))))
                []
                expanders))

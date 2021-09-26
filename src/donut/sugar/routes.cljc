@@ -321,3 +321,37 @@
   [expanded-routes pred tx]
   (walk/postwalk (fn [x] (if (pred x) (tx x) x))
                  expanded-routes))
+
+;;---
+;; assoc routes with endpoint defs
+;;---
+
+#?(:clj
+   (do
+     (defn- sugar-routes
+       [routes]
+       (->> routes
+            (filter (comp ::ns second))
+            vec))
+
+     (defn- require-endpoint-ns
+       [k]
+       (let [n (symbol k)]
+         (when-not (find-ns n)
+           ;; TODO handle exception
+           (require n))))
+
+     (defn load-handlers!
+       ""
+       ([routes]
+        (load-handlers! routes 'handlers))
+       ([routes handlers-sym]
+        (doseq [[_ opts] (sugar-routes routes)]
+          (require-endpoint-ns (::ns opts)))
+
+        (mapv (fn [[_ opts :as r]]
+                (if-let [ns (::ns opts)]
+                  (update r 1 merge (get @(ns-resolve (find-ns (symbol ns)) handlers-sym)
+                                         (::type opts)))
+                  r))
+              routes)))))

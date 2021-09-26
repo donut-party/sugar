@@ -1,6 +1,5 @@
 (ns donut.sugar.routes-test
   (:require [donut.sugar.routes :as sut]
-            [malli.core :as m]
             #?(:clj [clojure.test :refer :all]
                :cljs [cljs.test :refer :all :include-macros true])))
 
@@ -153,5 +152,19 @@
            (sut/expand-route [:ex.endpoint.user {::sut/expand-with [[:collection {::sut/full-path "/custom-path"}]
                                                                     [:member     {::sut/path-prefix "/api/v1"}]]}])))))
 
-[:project.backend.endpoint.user {::sut/expand-with [[:collection {::sut/full-path "/custom-path"}]
-                                                    [:member     {::sut/full-path "/another-custom-path"}]]}]
+(deftest load-handlers!-test
+  (testing "load-handlres! requires a ns and merges the handlers in 'handlers with route opts"
+    (is (= [["/routes-load-handlers"
+             {::sut/ns   :donut.sugar.routes-load-handlers
+              ::sut/type :collection
+              :name      :routes-load-handlerss
+              :get       {:handler :foo}}]
+            ["/routes-load-handlers/{id}"
+             {::sut/ns   :donut.sugar.routes-load-handlers
+              ::sut/type :member
+              :name      :routes-load-handlers
+              :id-key    :id
+              :post      {:handler :bar}}]]
+           (-> [[:donut.sugar.routes-load-handlers]]
+               (sut/expand-routes #"sugar\.")
+               (sut/load-handlers!))))))

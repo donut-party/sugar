@@ -341,6 +341,15 @@
            ;; TODO handle exception
            (require n))))
 
+     (defn merge-handlers
+       [routes handlers-sym]
+       (mapv (fn [[_ opts :as r]]
+               (if-let [ns (::ns opts)]
+                 (update r 1 merge (get @(ns-resolve (find-ns (symbol ns)) handlers-sym)
+                                        (::type opts)))
+                 r))
+             routes))
+
      (defn load-handlers!
        ""
        ([routes]
@@ -348,10 +357,4 @@
        ([routes handlers-sym]
         (doseq [[_ opts] (sugar-routes routes)]
           (require-endpoint-ns (::ns opts)))
-
-        (mapv (fn [[_ opts :as r]]
-                (if-let [ns (::ns opts)]
-                  (update r 1 merge (get @(ns-resolve (find-ns (symbol ns)) handlers-sym)
-                                         (::type opts)))
-                  r))
-              routes)))))
+        (merge-handlers routes handlers-sym)))))

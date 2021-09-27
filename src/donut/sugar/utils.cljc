@@ -1,0 +1,79 @@
+(ns donut.sugar.utils
+  (:require [clojure.string :as str]
+            #?@(:cljs [[goog.string :as gstr]
+                       [goog.string.format]])))
+
+
+(defn update-vals
+  "Takes a map to be updated, x, and a map of
+  {[k1 k2 k3] update-fn-1
+   [k4 k5 k6] update-fn-2}
+  such that such that k1, k2, k3 are updated using update-fn-1
+  and k4, k5, k6 are updated using update-fn-2"
+  [x update-map]
+  (reduce (fn [x [keys update-fn]]
+            (reduce (fn [x k] (update x k update-fn))
+                    x
+                    keys))
+          x
+          update-map))
+
+;;---
+;; Organize response records for easy frontend consumption
+;;---
+
+(defn key-by
+  [k xs]
+  (into {} (map (juxt k identity) xs)))
+
+(defn ent-type
+  "add ent-type metadata to obj. ent-type should be a keyword."
+  [x y]
+  {:pre [(or (keyword? x) (keyword? y))]}
+  ;; allow for both `->` and `->>`
+  (if (keyword? x)
+    (with-meta y {:ent-type x})
+    (with-meta x {:ent-type y})))
+
+(defn clj-kvar
+  "Given a namespaced keyword, look up the corresponding var in clj compilation or
+  return a keyword in cljs compilation."
+  [var-name]
+  #?(:clj (try @(ns-resolve (symbol (namespace var-name)) (symbol (name var-name)))
+               (catch Throwable _t
+                 (throw (ex-info (format "could not find var %s" var-name)
+                                 {:var-name var-name}))))
+     :cljs var-name))
+
+;;---
+;; formatting
+;;---
+
+(def fmt #?(:clj format :cljs gstr/format))
+
+(defn ksubs
+  "full string representation of a keyword:
+  :x/y => \"x/y\"
+  :y => \"y\""
+  [k]
+  (if (keyword? k)
+    (-> k str (subs 1))
+    k))
+
+(defn strk
+  "Like `str` but with keywords"
+  [& xs]
+  (->> xs
+       (reduce (fn [s x]
+                 (str s
+                      (if (keyword? x)
+                        (subs (str x) 1)
+                        x)))
+               "")
+       keyword))
+
+(defn slash
+  "replace dots with slashes in namespace to create a string that's
+  route-friendly"
+  [name]
+  (str/replace (ksubs name) #"\." "/"))

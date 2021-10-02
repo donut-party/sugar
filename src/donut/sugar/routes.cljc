@@ -325,12 +325,23 @@
            ;; TODO handle exception
            (require n))))
 
+     (defn resolve-handlers
+       [ns-name handlers-sym]
+       (if-let [handlers (ns-resolve (find-ns ns-name) handlers-sym)]
+         @handlers
+         (throw (ex-info (str "could not find " ns-name "/" handlers-sym)
+                         {}))))
+
      (defn merge-handlers
        [routes handlers-sym]
        (mapv (fn [[_ opts :as r]]
-               (if-let [ns (::ns opts)]
-                 (update r 1 merge (get @(ns-resolve (find-ns (symbol ns)) handlers-sym)
-                                        (::type opts)))
+               ;; TODO handle exception
+               (if-let [ns-name (some-> (::ns opts) symbol)]
+                 (do
+                   (when-not (find-ns ns-name)
+                     (throw (ex-info (str "endpoint ns " ns-name " referenced but not required") {})))
+                   (update r 1 merge (get (resolve-handlers ns-name handlers-sym)
+                                          (::type opts))))
                  r))
              routes))
 
@@ -340,6 +351,6 @@
        ([routes]
         (load-handlers! routes 'handlers))
        ([routes handlers-sym]
-        (doseq [[_ opts] (sugar-routes routes)]
-          (require-endpoint-ns (::ns opts)))
+        #_(doseq [[_ opts] (sugar-routes routes)]
+            (require-endpoint-ns (::ns opts)))
         (merge-handlers routes handlers-sym)))))

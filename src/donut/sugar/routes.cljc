@@ -312,19 +312,6 @@
 
 #?(:clj
    (do
-     (defn- sugar-routes
-       [routes]
-       (->> routes
-            (filter (comp ::ns second))
-            vec))
-
-     (defn- require-endpoint-ns
-       [k]
-       (let [n (symbol k)]
-         (when-not (find-ns n)
-           ;; TODO handle exception
-           (require n))))
-
      (defn resolve-handlers
        [ns-name handlers-sym]
        (if-let [handlers (ns-resolve (find-ns ns-name) handlers-sym)]
@@ -351,6 +338,4 @@
        ([routes]
         (load-handlers! routes 'handlers))
        ([routes handlers-sym]
-        #_(doseq [[_ opts] (sugar-routes routes)]
-            (require-endpoint-ns (::ns opts)))
         (merge-handlers routes handlers-sym)))))

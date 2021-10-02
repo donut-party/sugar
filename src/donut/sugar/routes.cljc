@@ -70,6 +70,7 @@
                     :id-key :id}]]"
   (:require [clojure.string :as str]
             [clojure.walk :as walk]
+            [donut.sugar.utils :as u]
             [malli.core :as m]
             [malli.error :as me]
             [meta-merge.core :as mm]
@@ -131,23 +132,6 @@
 ;;------
 ;; utils
 ;;------
-
-(def fmt #?(:clj format :cljs gstr/format))
-
-(defn ksubs
-  "full string representation of a keyword:
-  :x/y => \"x/y\"
-  :y => \"y\""
-  [k]
-  (if (keyword? k)
-    (-> k str (subs 1))
-    k))
-
-(defn slash
-  "replace dots with slashes in namespace to create a string that's
-  route-friendly"
-  [name]
-  (str/replace (ksubs name) #"\." "/"))
 
 
 ;;------
@@ -212,7 +196,7 @@
                   name
                   {:name  name
                    ::type name
-                   ::path (fmt "/%s%s" (slash base-name) path)}
+                   ::path (u/fmt "/%s%s" (u/slash base-name) path)}
                   opts))
 
 ;; keys like :member/some-key are treated like
@@ -225,10 +209,10 @@
                   {:name   (keyword base-name (name expander))
                    :id-key :id
                    ::path  (fn [{:keys [id-key] :as o}]
-                             (fmt "/%s/{%s}/%s"
-                                  (slash (::base-name o))
-                                  (ksubs id-key)
-                                  (name expander)))}
+                             (u/fmt "/%s/{%s}/%s"
+                                    (u/slash (::base-name o))
+                                    (u/ksubs id-key)
+                                    (name expander)))}
                   opts))
 
 (defmethod expand-with
@@ -237,7 +221,7 @@
   (generate-route nsk
                   expander
                   {:name  (keyword (str base-name "s"))
-                   ::path (str "/" (slash base-name))}
+                   ::path (str "/" (u/slash base-name))}
                   opts))
 
 (defmethod expand-with
@@ -248,9 +232,9 @@
                   {:name   (keyword base-name)
                    :id-key :id
                    ::path  (fn [{:keys [id-key] :as o}]
-                             (fmt "/%s/{%s}"
-                                  (slash base-name)
-                                  (ksubs id-key)))}
+                             (u/fmt "/%s/{%s}"
+                                    (u/slash base-name)
+                                    (u/ksubs id-key)))}
                   opts))
 
 ;; singletons use the :collection path and the :member name
@@ -260,7 +244,7 @@
   (generate-route nsk
                   expander
                   {:name  (keyword base-name)
-                   ::path (str "/" (slash base-name))}
+                   ::path (str "/" (u/slash base-name))}
                   opts))
 
 (defn expand-route
@@ -351,7 +335,8 @@
              routes))
 
      (defn load-handlers!
-       ""
+       "Requires all namespaces for sugared routes and associates the handlers defined
+        in those ns's with the corresponding route"
        ([routes]
         (load-handlers! routes 'handlers))
        ([routes handlers-sym]

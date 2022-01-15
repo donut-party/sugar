@@ -85,11 +85,17 @@
   (into {} (map (juxt k identity) xs)))
 
 (defn toggle [v x y]
-  (if (= v x) y x))
+  (if (= v y) x y))
 
 (defn flatv
   [& args]
   (into [] (flatten args)))
+
+(defn vectorize
+  [maybe-sequential]
+  (if (sequential? maybe-sequential)
+    (vec maybe-sequential)
+    [maybe-sequential]))
 
 ;;---
 ;; Organize response records for easy frontend consumption

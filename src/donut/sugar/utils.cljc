@@ -31,7 +31,7 @@
   [db m]
   (deep-merge-with (fn [_ x] x) db m))
 
-(defn update-vals
+(defn update-many-vals
   "Takes a map to be updated, x, and a map of
   {[k1 k2 k3] update-fn-1
    [k4 k5 k6] update-fn-2}

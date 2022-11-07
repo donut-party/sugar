@@ -27,11 +27,11 @@
          (u/deep-merge {:a {:b {:c :d}}}
                        {:a {:b {:x :y}} :e :f}))))
 
-(deftest update-vals
+(deftest update-many-vals
   (is (= {:a 2, :b 2, :c 2, :d 0, :e 0, :f 0}
-         (u/update-vals {:a 1, :b 1, :c 1, :d 1, :e 1, :f 1}
-                        {[:a :b :c] inc
-                         [:d :e :f] dec}))))
+         (u/update-many-vals {:a 1, :b 1, :c 1, :d 1, :e 1, :f 1}
+                             {[:a :b :c] inc
+                              [:d :e :f] dec}))))
 
 (deftest set-toggle
   (is (= (u/set-toggle #{:a :b} :a)

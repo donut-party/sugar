@@ -3,7 +3,8 @@
    [clojure.string :as str]
    [clojure.walk :as walk]
    [clojure.data :as data]
-
+   [malli.core :as m]
+   [malli.error :as me]
    #?@(:cljs [[goog.string :as gstr]
               [goog.string.format]])))
 
@@ -21,7 +22,7 @@
   [f & maps]
   (apply
    (fn m [& maps]
-     (if (every? map? maps)
+     (if (every? #(or (map? %) (nil? %)) maps)
        (apply merge-with m maps)
        (apply f maps)))
    maps))
@@ -44,6 +45,10 @@
                     keys))
           x
           update-map))
+
+(defn default-vals
+  [x defaul-val-map]
+  (update-many-vals x (map (fn [[k v]] [k #(or % v)]) defaul-val-map)))
 
 (defn set-toggle
   "Toggle `val`'s membership in set `s`"
@@ -171,3 +176,28 @@
   (-> (name kw)
       (str/replace #"-" " ")
       capitalize-words))
+
+(defn feedback-humanize
+  "Humanized a explanation. Accepts the following options:
+  - `:wrap`, a function of `error -> message`, defaulting to `:message`
+  - `:resolve`, a function of `explanation error options -> path message`"
+  ([explanation]
+   (feedback-humanize explanation nil))
+  ([{:keys [_value errors] :as explanation} options]
+   (let [options (default-vals options
+                               {[:wrap]    (comp vector :message)
+                                [:resolve] me/-resolve-direct-error
+                                [:errors]  (merge me/default-errors
+                                                  {::m/missing-key {:error/message "required"}})})
+         {:keys [wrap resolve]} options]
+     (when errors
+       (reduce
+        (fn [acc error]
+          (let [[path message] (resolve explanation error options)]
+            (assoc acc path (wrap (assoc error :message message)))))
+        nil errors)))))
+
+(defn feedback
+  [spec data & [feedback-humanize-opts]]
+  (-> (m/explain spec data)
+      (feedback-humanize feedback-humanize-opts)))

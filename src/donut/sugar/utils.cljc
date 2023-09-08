@@ -201,3 +201,11 @@
   [spec data & [feedback-humanize-opts]]
   (-> (m/explain spec data)
       (feedback-humanize feedback-humanize-opts)))
+
+(defn validate-with-throw
+  [schema value & [extra-ex-info]]
+  (when-let [explanation (and schema (m/explain schema value))]
+    (throw (ex-info (str "Schema validation failed")
+                    (merge {:spec-explain-human (me/humanize explanation)
+                            :spec-explain       explanation}
+                           extra-ex-info)))))

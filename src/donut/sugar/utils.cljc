@@ -203,7 +203,7 @@
       (feedback-humanize feedback-humanize-opts)))
 
 (defn validate-with-throw
-  [{:keys [schema value extra-ex-info message]}]
+  [schema value & [message extra-ex-info]]
   (when-let [explanation (and schema (m/explain schema value))]
     (throw (ex-info (or message "Schema validation failed")
                     (merge {:spec-explain-human (me/humanize explanation)

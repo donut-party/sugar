@@ -39,36 +39,36 @@
 
 (deftest map->composable-test
   (is (= {[:a] 1}
-         (sut/map->composable {:a 1})))
+         (sut/map->composition {:a 1})))
 
   (is (= {[:a :b :c] :d}
-         (sut/map->composable {:a {:b {:c :d}}})))
+         (sut/map->composition {:a {:b {:c :d}}})))
 
   (is (= {[:a :b :c] :d
           [:a :b :e] {}
           [:x]       []
           [:y]       {}}
-         (sut/map->composable {:a {:b {:c :d
-                                       :e {}}}
-                               :x []
-                               :y {}}))))
+         (sut/map->composition {:a {:b {:c :d
+                                        :e {}}}
+                                :x []
+                                :y {}}))))
 
 (deftest compose-with-map->composable-test
   (is (= {:a {:b 1
               :c 2}}
          (sut/compose {:a {:b 1}}
-                      (sut/map->composable
+                      (sut/map->composition
                        {:a (sut/>merge {:b 4 :c 2})}))))
 
   (is (= {:foo [4 5 6 1 2 3]}
          (sut/compose {:foo [1 2 3]}
-                      (sut/map->composable
+                      (sut/map->composition
                        {:foo (sut/>into [4 5 6])}))))
 
   (is (= {:a {:b {:c {}}}
           :d {:e [4 5 6 1 2 3]}}
          (sut/compose {:a {:b {:c :going-awway}}
                        :d {:e [1 2 3]}}
-                      (sut/map->composable
+                      (sut/map->composition
                        {:a {:b {:c {}}}
                         :d {:e (sut/>into [4 5 6])}})))))

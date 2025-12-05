@@ -30,10 +30,10 @@
     (assoc-in base path update-val)))
 
 (defn compose
-  [base updates]
-  (reduce-kv compose-update base updates))
+  [base composition]
+  (reduce-kv compose-update base composition))
 
-(defn map->composable
+(defn map->composition
   [m]
   (loop [composable      {}
          remaining-paths (clojure.core/mapv vector (keys m))]

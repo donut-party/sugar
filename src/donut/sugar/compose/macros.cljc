@@ -5,7 +5,12 @@
    (defmacro defcomposer
      "creates a composing function over "
      [fname]
-     `(defn ~fname
-        [& args#]
-        {:donut.sugar.compose/composing-function ~(symbol "clojure.core" (name fname))
-         :donut.sugar.compose/args               args#})))
+     `(do
+        (defn ~fname
+          [& args#]
+          {:donut.sugar.compose/composing-function ~(symbol "clojure.core" (name fname))
+           :donut.sugar.compose/args               args#})
+        (defn ~(symbol (str ">" fname))
+          [& args#]
+          {:donut.sugar.compose/composing-function (donut.sugar.compose/>f ~(symbol "clojure.core" (name fname)))
+           :donut.sugar.compose/args               args#}))))

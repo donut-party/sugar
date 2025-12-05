@@ -1,16 +1,25 @@
 (ns donut.sugar.compose
-  (:require [donut.sugar.compose.macros :refer [defcomposer]])
+  (:require
+   [donut.sugar.compose.macros :refer [defcomposer]])
   (:refer-clojure
    :exclude
-   [update merge into conj assoc]))
+   [update merge into conj assoc map mapv]))
 
-(declare update merge into conj assoc)
+(declare
+ update  merge  into  conj  assoc  map  mapv
+ >update >merge >into >conj >assoc >map >mapv)
 
 (defcomposer update)
 (defcomposer merge)
 (defcomposer into)
 (defcomposer conj)
 (defcomposer assoc)
+
+(defn >f
+  [f]
+  (fn arg-swapped
+    ([a b] (f b a))
+    ([a b & rest] (apply f b a rest))))
 
 (defn compose-update
   [base path update-val]
@@ -21,3 +30,28 @@
 (defn compose
   [base updates]
   (reduce-kv compose-update base updates))
+
+(defn map->composable
+  [m]
+  (loop [composable      {}
+         remaining-paths (clojure.core/mapv vector (keys m))]
+    (let [[current-path & new-remaining-paths] remaining-paths
+          current-value                        (get-in m current-path)
+          current-map?                         (map? current-value)]
+      (cond
+        (empty? remaining-paths)
+        composable
+
+        (or (not current-map?)
+            (and current-map?
+                 (or (empty? current-value)
+                     (::composing-function current-value))))
+        (recur (clojure.core/assoc composable current-path current-value)
+               new-remaining-paths)
+
+        :else
+        (recur composable
+               (clojure.core/into
+                (clojure.core/mapv (fn [k] (clojure.core/conj current-path k))
+                                   (keys current-value))
+                new-remaining-paths))))))

@@ -14,6 +14,8 @@
 (defcomposer into)
 (defcomposer conj)
 (defcomposer assoc)
+(defcomposer map)
+(defcomposer mapv)
 
 (defn >f
   [f]

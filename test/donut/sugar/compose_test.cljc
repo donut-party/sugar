@@ -1,28 +1,28 @@
 (ns donut.sugar.compose-test
-  (:require [donut.sugar.compose :as sut]
+  (:require [donut.sugar.compose :as dc]
             #?(:clj [clojure.test :refer [deftest is]]
                :cljs [cljs.test :refer [deftest is] :include-macros true])))
 
 (deftest compose-test
   (is (= {}
-         (sut/compose {} {})))
+         (dc/compose {} {})))
 
   (is (= {:foo :bar}
-         (sut/compose {} {[:foo] :bar})))
+         (dc/compose {} {[:foo] :bar})))
 
   (is (= {:foo [:bar :baz]}
-         (sut/compose {:foo [:bar]}
-                      {[:foo] (sut/conj :baz)})))
+         (dc/compose {:foo [:bar]}
+                     {[:foo] (dc/conj :baz)})))
 
   (is (= {:a {:b {:c '(3 2 1)}}}
-         (sut/compose {:a nil}
-                      {[:a :b :c] (sut/into [1 2 3])})))
+         (dc/compose {:a nil}
+                     {[:a :b :c] (dc/into [1 2 3])})))
 
   (is (= {:a {:b 1
               :c 2
               :d 3}}
-         (sut/compose {:a {:b 1}}
-                      {[:a] (sut/merge {:c 2 :d 3})}))))
+         (dc/compose {:a {:b 1}}
+                     {[:a] (dc/merge {:c 2 :d 3})}))))
 
 ;; >f versions of functions reverse the first two arguments
 (deftest compose-with->f-test
@@ -30,25 +30,25 @@
   ;; {:b 1} gets merged into {:b 4 :c 2}
   (is (= {:a {:b 1
               :c 2}}
-         (sut/compose {:a {:b 1}}
-                      {[:a] (sut/>merge {:b 4 :c 2})})))
+         (dc/compose {:a {:b 1}}
+                     {[:a] (dc/>merge {:b 4 :c 2})})))
 
   (is (= {:foo [4 5 6 1 2 3]}
-         (sut/compose {:foo [1 2 3]}
-                      {[:foo] (sut/>into [4 5 6])}))))
+         (dc/compose {:foo [1 2 3]}
+                     {[:foo] (dc/>into [4 5 6])}))))
 
 (deftest map->composable-test
   (is (= {[:a] 1}
-         (sut/map->composition {:a 1})))
+         (dc/map->composition {:a 1})))
 
   (is (= {[:a :b :c] :d}
-         (sut/map->composition {:a {:b {:c :d}}})))
+         (dc/map->composition {:a {:b {:c :d}}})))
 
   (is (= {[:a :b :c] :d
           [:a :b :e] {}
           [:x]       []
           [:y]       {}}
-         (sut/map->composition {:a {:b {:c :d
+         (dc/map->composition {:a {:b {:c :d
                                         :e {}}}
                                 :x []
                                 :y {}}))))
@@ -56,19 +56,61 @@
 (deftest compose-with-map->composable-test
   (is (= {:a {:b 1
               :c 2}}
-         (sut/compose {:a {:b 1}}
-                      (sut/map->composition
-                       {:a (sut/>merge {:b 4 :c 2})}))))
+         (dc/compose {:a {:b 1}}
+                     (dc/map->composition
+                      {:a (dc/>merge {:b 4 :c 2})}))))
 
   (is (= {:foo [4 5 6 1 2 3]}
-         (sut/compose {:foo [1 2 3]}
-                      (sut/map->composition
-                       {:foo (sut/>into [4 5 6])}))))
+         (dc/compose {:foo [1 2 3]}
+                     (dc/map->composition
+                      {:foo (dc/>into [4 5 6])}))))
 
   (is (= {:a {:b {:c {}}}
           :d {:e [4 5 6 1 2 3]}}
-         (sut/compose {:a {:b {:c :going-awway}}
-                       :d {:e [1 2 3]}}
-                      (sut/map->composition
-                       {:a {:b {:c {}}}
-                        :d {:e (sut/>into [4 5 6])}})))))
+         (dc/compose {:a {:b {:c :going-awway}}
+                      :d {:e [1 2 3]}}
+                     (dc/map->composition
+                      {:a {:b {:c {}}}
+                       :d {:e (dc/>into [4 5 6])}})))))
+
+
+;; data-oriented program involves describing what's to be done as much as
+;; possible with data, deferring execution of that until later
+;;
+;; as a result, "composition" often happens through data composition, but doing
+;; that is always kind of tricky
+;;
+;; value prop of this library is to provide a clear and intuitive means of data composition:
+;; - "deep merge" - recursively merge arbitrarily nested data structures
+;; - flexbility around how you handle merging any particular node using update semantics
+
+(dc/compose
+ {:a {:b 1}}
+ {[:a] (dc/merge {:c 2 :d 3})})
+;; =>
+{:a {:b 1
+     :c 2
+     :d 3}}
+
+;; use into to merge two values
+(dc/compose
+ {:a {:b {:c :going-awway}}
+  :d {:e [1 2 3]}}
+ (dc/map->composition
+  {:a {:b {:c {}}}
+   :d {:e (dc/into [4 5 6])}}))
+;; =>
+{:a {:b {:c {}}}
+ :d {:e [1 2 3 4 5 6]}}
+
+;; use >into, which swaps the first two args, to merge two values
+(dc/compose
+ {:a {:b {:c :going-awway}}
+  :d {:e [1 2 3]}}
+ (dc/map->composition
+  {:a {:b {:c {}}}
+   :d {:e (dc/>into [4 5 6])}}))
+;; =>
+{:a {:b {:c {}}}
+ :d {:e [4 5 6 1 2 3]}}
+(into [4 5 6] [1 2 3])

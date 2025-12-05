@@ -7,7 +7,7 @@
 
 (declare
  update  merge  into  conj  assoc  map  mapv
- >update >merge >into >conj >assoc >map >mapv)
+ >update >merge >into >conj >assoc >map >mapv >f)
 
 (defcomposer update)
 (defcomposer merge)
@@ -57,3 +57,6 @@
                 (clojure.core/mapv (fn [k] (clojure.core/conj current-path k))
                                    (keys current-value))
                 new-remaining-paths))))))
+
+;; TODO composer for or
+;; TODO rename composer to updater?

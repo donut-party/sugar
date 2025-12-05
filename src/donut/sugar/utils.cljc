@@ -209,3 +209,12 @@
                     (merge {:spec-explain-human (me/humanize explanation)
                             :spec-explain       explanation}
                            extra-ex-info)))))
+
+(defn assoc-many
+  "(assoc-many {} {[:foo :bar] :bux}) => {:foo {:bar :bux}"
+  ([m assocs]
+   (reduce-kv (fn [m path val] (assoc-in m path val))
+              m
+              assocs))
+  ([m prefix assocs]
+   (update-in m prefix assoc-many assocs)))

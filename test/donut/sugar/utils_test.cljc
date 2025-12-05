@@ -108,3 +108,16 @@
 (deftest kw-title
   (is (= "Topic Title"
          (u/kw-title :topic-title))))
+
+(deftest assoc-many-test
+  (is (= {:a {:b 1}
+          :c {:d 2}}
+         (u/assoc-many {} {[:a :b] 1
+                           [:c :d] 2})))
+
+  (is (= {:foo {:a {:b 1}
+                :c {:d 2}}}
+         (u/assoc-many {}
+                       [:foo]
+                       {[:a :b] 1
+                        [:c :d] 2}))))

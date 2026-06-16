@@ -19,7 +19,7 @@
 
 (defn- pom-template [version]
   [[:description "lil helpers for the cute lil framework"]
-   [:url "https://github.com/donut-power/sugar"]
+   [:url "https://github.com/donut-party/sugar"]
    [:licenses
     [:license
      [:name "MIT"]
@@ -28,9 +28,9 @@
     [:developer
      [:name "Daniel Higginbotham"]]]
    [:scm
-    [:url "https://github.com/donut-power/sugar"]
-    [:connection "scm:git:https://github.com/donut-power/sugar.git"]
-    [:developerConnection "scm:git:ssh:git@github.com:donut-power/sugar.git"]
+    [:url "https://github.com/donut-party/sugar"]
+    [:connection "scm:git:https://github.com/donut-party/sugar.git"]
+    [:developerConnection "scm:git:ssh:git@github.com:donut-party/sugar.git"]
     [:tag (str "v" version)]]])
 
 (defn- jar-opts [opts]
@@ -58,3 +58,9 @@
     (dd/deploy {:installer :remote :artifact (b/resolve-path jar-file)
                 :pom-file (b/pom-path (select-keys opts [:lib :class-dir]))}))
   opts)
+
+(defn install [opts]
+  (let [opts (jar-opts opts)]
+    (jar opts)
+    (b/install opts)
+    (println version)))

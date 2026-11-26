@@ -1,11 +1,8 @@
 name: CI
 
-# Private repo: pushes to main don't trigger CI so routine work doesn't
-# spend the org's private-repo Actions minutes. Use workflow_dispatch or a PR
-# to run it ad hoc; pushes to release still test, build and deploy.
 on:
   push:
-    branches: [release]
+    branches: [main, release]
   pull_request:
   workflow_dispatch:
 
